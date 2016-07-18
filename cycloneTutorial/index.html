@@ -1,0 +1,212 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Cyclone Tutorial</title>
+        <link rel="stylesheet" href="../style.css" />
+    </head>
+    <body>
+        <div class="wrapper">
+            <h1>Adafruit Circuit Playground Cyclone Game Tutorial</h1>
+            <h5>By Nath Tumlin. Feel free to send comments, questions, concerns, corrections, or cash to ngtumlin@crimson.ua.edu</h5>
+            <h2>Video demo</h2>
+			<video width="680" height="480" controls>
+				<source src="cyclone.mp4" type="video/mp4" />
+				Your browser doesn't support the video tag.
+			</video>
+			<p>In this tutorial we'll look at how to recreate the Cyclone game on an Adafruit Circuit Playground, walking through the code section by section. At the end is the complete source code for this game.</p>
+            <h2>Initialization</h2>
+            <p>Adafruit has created a library to make programming the Circuit Playground easier. We start by including it.</p>
+            <pre><span class="control">#include</span> <span class="string">"Adafruit_CircuitPlayground.h"</span></pre>
+            <p>Next we'll declare the variables that we'll need, as well as declare a function for playing a sad and happy tune when the player loses or scores.</p>
+            <pre><span class="type">static uint8_t</span> pos = 0;
+<span class="type">static uint8_t</span> ticks = 0;
+<span class="type">static uint8_t</span> score = 10;
+<span class="type">static bool</span> lastButtonPos = false;
+<span class="type">static bool</span> buttonPos = false;
+
+<span class="type">void</span> playSad();
+<span class="type">void</span> playHappy();</pre>
+            <p><code>pos</code> is used to keep track of where the light is, and <code>score</code> keeps track of the player's score. <code>lastButtonPos</code> and <code>buttonPos</code> keep track of the left button so we know when the player pressed it. We'll talk about <code>ticks</code> in a little bit.</p>
+            <p>The <code>setup()</code> function runs one time when the board is powered on. First it sets up our random number generator, then it sets up the CircuitPlayground library.</p>
+            <pre><span class="type">void</span> <span class="control">setup</span>() {
+  <span class="method">randomSeed</span>(<span class="method">analogRead</span>(0));
+  CircuitPlayground.<span class="method">begin</span>();
+}</pre>
+            <h2>Running the game</h2>
+            <p>After <code>setup()</code> finishes, <code>loop()</code> runs over and over as long as the board is turned on. This is where we put the code for running the game.</p>
+            <p>There are two modes, one for actually playing the game, and one for checking our score. The first thing we do in <code>loop()</code> is check which way the switch on the board is turned. If it's to the right we play the game, and if it's to the left we show the score.</p>
+            <pre><span class="type">void</span> <span class="control">loop</span>() {
+  <span class="comment">//if the switch is to the right</span>
+  <span class="control">if</span> (!CircuitPlayground.slideSwitch()) {</pre>
+            <h3>If the switch is to the right</h3>
+            <p>If the switch is to the right then we're in the mode for playing the game. The first thing we do is turn off all the lights, say we want to turn on the one light at <code>pos</code> with a color based on <code>pos</code>, and then use <code>show()</code> to actually turn on the light.</p>
+            <pre>CircuitPlayground.clearPixels();
+CircuitPlayground.strip.setPixelColor(pos, CircuitPlayground.colorWheel((pos * 256 / 10) & 255));
+CircuitPlayground.strip.show();</pre>
+            <p>Next we save the old position and get the current position of the left button so that we'll be able to tell if the player pressed it.</p>
+            <pre>lastButtonPos = buttonPos;
+buttonPos = CircuitPlayground.leftButton();</pre>
+            <p>The way we check if the player pressed the button is to see if the button is held down now and that the last time we checked it wasn't held down. If we only checked that it's being held down now, the player could cheat by pressing the button and never letting go, scoring whenever the light came to the right position.</p>
+            <pre><span class="control">if</span> (buttonPos && !lastButtonPos) {</pre>
+            <p>The light by the button is at position 2, so once we know the player has pressed the button, we'll check to see if the light is in the right place.</p>
+            <pre><span class="control">if</span> (pos == 2) {</pre>
+            <p>If it is, we'll play the happy tune, add 5 to the player's score, put the light in a random position, reset <code>ticks</code>, and <code>return</code> to restart <code>loop()</code>.</p>
+            <pre>playHappy();
+score += 5;
+pos = <span class="method">random</span>(10);
+ticks = 0;
+<span class="control">return</span>;</pre>
+            <p>If the light wasn't at 2, that means the player missed when they pressed the button. We'll start by taking one away from thier score.</p>
+            <pre>} <span class="control">else</span> {
+    score--;</pre>
+            <p>Then we check if the player has run out of points and lost the game. If they have then we play the sad tune and reset everything so they can try again.</p>
+            <pre><span class="control">if</span> (score == 0) {
+    playSad();
+    score = 10;
+    pos = <span class="method">random</span>(10);
+    ticks = 0;
+    <span class="control">return</span>;
+}</pre>
+            <p>Now let's talk about <code>ticks</code>. <code>ticks</code> is used so that we can check if the player pushed the button, not just when we move the light, but while the light is still too. The following code increases <code>ticks</code> by one, then checks if it's reached 10 yet. If it has, we'll reset ticks, and move the position of the light by one. We also have to check if <code>pos</code> is 10, and if so move it back around to 0,s ince there is no light #10.</p>
+            <pre>ticks++;
+
+<span class="control">if</span> (ticks == 10) {
+      ticks = 0;
+      pos++;
+      <span class="control">if</span> (pos == 10) { 
+        pos = 0;
+      }
+}</pre>
+            <p>Finally, we add a delay based on the player's score. The longer this is the slower the light moves. As the player's score gets higher, we make the delay shorter to make the game harder. At a score of 1, the light takes more than half a second to move. As the score gets higher, the time the light stays in place goes towards 1/20th of a second, less time than it takes to blink!</p>
+            <pre><span class="method">delay</span>(5 + ((10.0 / score) * 5));</pre>
+            <h3>If the switch is to the left</h3>
+            <p>If the switch is to the left, we show the player's score. We don't have a screen to show digits, and if we just turned on a light for every point the player had, we'd run out as soon as we started since the player starts with a score of 10, and there's only 10 lights on the board. The solution is to show the score in binary so that we can show a score as high as 1023 using all 10 lights. The following code puts <code>score</code> on the board in binary. It's a little confusing and not that important, so we won't talk about exactly how it works.</p>
+            <pre>} <span class="control">else</span> {
+    CircuitPlayground.clearPixels();
+    <span class="control">for</span> (<span class="type">int</span> i = 0; i < 10; i++) {
+      CircuitPlayground.strip.setPixelColor(i, ((score >> i) & 1) * 255, 0, 0);
+    }
+    CircuitPlayground.strip.show();
+    <span class="method">delay</span>(100);
+}</pre>
+            <p>This finishes the <code>loop()</code> function.</p>
+            <h2>Playing the music</h2>
+            <p>The Circuit Playground has a built in speaker that we use to play the sounds when the player scores or loses. The method accepts a number in hertz to play, as well as a duration. Certain musical notes correspond to certain values of hertz, and the actual notes played are written int comment at the top of the functions. <code>playSad()</code> is a bit slower and descends, while <code>playHappy()</code> is a bit faster and the notes ascend. We also need calls to <code>delay()</code> to wait for each note to finish before starting the next one.</p>
+            <pre><span class="type">void</span> playSad() {
+  <span class="comment">//D Db C B</span>
+  CircuitPlayground.playTone(294, 500);
+  <span class="method">delay</span>(550);
+  CircuitPlayground.playTone(277, 500);
+  <span class="method">delay</span>(550);
+  CircuitPlayground.playTone(262, 500);
+  <span class="method">delay</span>(550);
+  CircuitPlayground.playTone(247, 1000);
+  <span class="method">delay</span>(1100);
+}
+
+<span class="type">void</span> playHappy() {
+  <span class="comment">//A Bb B C</span>
+  CircuitPlayground.playTone(440, 250);
+  <span class="method">delay</span>(260);
+  CircuitPlayground.playTone(466, 250);
+  <span class="method">delay</span>(260);
+  CircuitPlayground.playTone(494, 250);
+  <span class="method">delay</span>(260);
+  CircuitPlayground.playTone(523, 1000);
+  <span class="method">delay</span>(1100);
+}</pre>
+            <h2>The complete code</h2>
+            <p>That's all there is to the Cyclone game. Below is the complete code that you can copy and paste into the Arduino IDE and run on your Circuit Playground.</p>
+        <pre>
+<span class="control">#include</span> <span class="string">"Adafruit_CircuitPlayground.h"</span>
+
+<span class="type">static uint8_t</span> pos = 0;
+<span class="type">static uint8_t</span> ticks = 0;
+<span class="type">static uint8_t</span> score = 10;
+<span class="type">static bool</span> lastButtonPos = false;
+<span class="type">static bool</span> buttonPos = false;
+
+<span class="type">void</span> playSad();
+<span class="type">void</span> playHappy();
+
+<span class="type">void</span> <span class="control">setup</span>() {
+  <span class="method">randomSeed</span>(<span class="method">analogRead</span>(0));
+  CircuitPlayground.<span class="method">begin</span>();
+}
+
+<span class="type">void</span> <span class="control">loop</span>() {
+  <span class="comment">//if the switch is to the right</span>
+  <span class="control">if</span> (!CircuitPlayground.slideSwitch()) {
+    CircuitPlayground.clearPixels();
+    CircuitPlayground.strip.setPixelColor(pos, CircuitPlayground.colorWheel((pos * 256 / 10) & 255));
+    CircuitPlayground.strip.show();
+    
+    lastButtonPos = buttonPos;
+    buttonPos = CircuitPlayground.leftButton();
+
+    <span class="control">if</span> (buttonPos && !lastButtonPos) {
+      <span class="control">if</span> (pos == 2) {
+        playHappy();
+        score += 5;
+        pos = <span class="method">random</span>(10);
+        ticks = 0;
+        <span class="control">return</span>;
+      } <span class="control">else</span> {
+        score--;
+        <span class="control">if</span> (score == 0) {
+          playSad();
+          score = 10;
+          pos = <span class="method">random</span>(10);
+          ticks = 0;
+          <span class="control">return</span>;
+        }
+      }
+    }
+
+    ticks++;
+
+    <span class="control">if</span> (ticks == 10) {
+      ticks = 0;
+      pos++;
+      <span class="control">if</span> (pos == 10) { 
+        pos = 0;
+      }
+    }
+
+    <span class="method">delay</span>(5 + ((10.0 / score) * 5));
+  } <span class="control">else</span> {
+    CircuitPlayground.clearPixels();
+    <span class="control">for</span> (<span class="type">int</span> i = 0; i < 10; i++) {
+      CircuitPlayground.strip.setPixelColor(i, ((score >> i) & 1) * 255, 0, 0);
+    }
+    CircuitPlayground.strip.show();
+    <span class="method">delay</span>(100);
+  }
+}
+
+<span class="type">void</span> playSad() {
+  <span class="comment">//D Db C B</span>
+  CircuitPlayground.playTone(294, 500);
+  <span class="method">delay</span>(550);
+  CircuitPlayground.playTone(277, 500);
+  <span class="method">delay</span>(550);
+  CircuitPlayground.playTone(262, 500);
+  <span class="method">delay</span>(550);
+  CircuitPlayground.playTone(247, 1000);
+  <span class="method">delay</span>(1100);
+}
+
+<span class="type">void</span> playHappy() {
+  <span class="comment">//A Bb B C</span>
+  CircuitPlayground.playTone(440, 250);
+  <span class="method">delay</span>(260);
+  CircuitPlayground.playTone(466, 250);
+  <span class="method">delay</span>(260);
+  CircuitPlayground.playTone(494, 250);
+  <span class="method">delay</span>(260);
+  CircuitPlayground.playTone(523, 1000);
+  <span class="method">delay</span>(1100);
+}</pre>
+        </div>
+    </body>
+</html>

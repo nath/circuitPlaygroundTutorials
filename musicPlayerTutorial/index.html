@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Music Player Tutorial</title>
+        <link rel="stylesheet" href="../style.css" />
+    </head>
+    <body>
+        <div class="wrapper">
+            <h1>Adafruit Circuit Playground Music Player Tutorial</h1>
+            <h5>By Nath Tumlin. Feel free to send comments, questions, concerns, corrections, or cash to ngtumlin@crimson.ua.edu</h5>
+			<h2>Video demo</h2>
+			<video width="680" height="480" controls>
+				<source src="musicPlayer.mp4" type="video/mp4" />
+				Your browser doesn't support the video tag.
+			</video>
+			<p>In this tutorial we learn how to make the Adafruit Circuit Playground play music, in this case the first 4 measures of Row, Row, Row Your Boat, when we press the left button.</p>
+			<h2>Initialization</h2>
+			<p>We'll start by including Adafruit's CircuitPlayground library.</p>
+			<pre><span class="control">#include</span> <span class="string">"Adafruit_CircuitPlayground.h"</span></pre>
+			<p>Next we need to define some variables which will hold the notes we need to play (in hertz) and how long we should play them for (in eighth notes).</p>
+			<pre><span class="type">static int</span> notes[]    = {523, 523, 523, 587, 659,
+                         659, 587, 659, 698, 784};
+
+<span class="type">static int</span> duration[] = {  3,   3,   2,   1,   3,
+                           2,   1,   2,   1,   6};</pre>
+			<p>We also declare a <code>playNote()</code> function, which will play a note for a specified duration.</p>
+			<pre><span class="type">void</span> playNote(<span class="type">int</span> frequency, <span class="type">int</span> duration);</pre>
+			<p>Then we need to define the <code>setup()</code> function, which runs one time when we turn on the board, and in this case just sets up the CircuitPlayground library</p>
+			<pre><span class="type">void</span> <span class="control">setup</span>() {
+  CircuitPlayground.<span class="method">begin</span>();
+}</pre>
+			<h2>Playing the song</h2>
+			<p>The <code>loop()</code> function runs over and over once <code>setup()</code> is finished. Here it checks to see if the left button is pressed,</p>
+			<pre><span class="type">void</span> <span class="control">loop</span>() {
+  <span class="control">if</span> (CircuitPlayground.leftButton()) {</pre>
+			<p>and if it has, it loops through all 10 notes and plays them for their duration.</p>
+			<pre><span class="control">for</span> (<span class="type">int</span> i=0; i<10; i++) {
+  playNote(notes[i], duration[i]);
+}</pre>
+			<h2>Playing a note</h2>
+			<p>The function <code>CircuitPlayground.playTone()</code> plays a note for a specified duration, but doesn't wait for that duration before it returns. To keep all our notes from playing at once, <code>playNote()</code> also calls <code><span class="method">delay()</span></code> so that we wait for one note to finish before playing the next one.</p>
+			<pre><span class="type">void</span> playNote(<span class="type">int</span> frequency, <span class="type">int</span> duration) {
+  CircuitPlayground.playTone(frequency, duration * 150);
+  <span class="method">delay</span>(duration * 160);
+}</pre>
+			<p>We multiply <code>duration</code> when passing it to <code>CircuitPlayground.playTone()</code> and <code><span class="method">delay</span>()</code> because they both accept arguments in milliseconds, and <code>duration</code> is in eighth notes, so the multiplication does the proper conversion. The slightly higher multiplier in the <code><span class="method">delay</span>()</code> call is so that we have a slight pause between notes.</p>
+			<h2>The complete code</h2>
+			<pre><span class="control">#include</span> <span class="string">"Adafruit_CircuitPlayground.h"</span>
+
+<span class="type">static int</span> notes[]    = {523, 523, 523, 587, 659,
+                         659, 587, 659, 698, 784};
+
+<span class="type">static int</span> duration[] = {  3,   3,   2,   1,   3,
+                           2,   1,   2,   1,   6};
+
+<span class="type">void</span> playNote(<span class="type">int</span> frequency, <span class="type">int</span> duration);
+						   
+<span class="type">void</span> <span class="control">setup</span>() {
+  CircuitPlayground.<span class="method">begin</span>();
+}
+
+<span class="type">void</span> <span class="control">loop</span>() {
+  <span class="control">if</span> (CircuitPlayground.leftButton()) {
+    <span class="control">for</span> (<span class="type">int</span> i=0; i<10; i++) {
+      playNote(notes[i], duration[i]);
+    }
+  }
+}
+
+<span class="type">void</span> playNote(<span class="type">int</span> frequency, <span class="type">int</span> duration) {
+  CircuitPlayground.playTone(frequency, duration * 150);
+  <span class="method">delay</span>(duration * 160);
+}</pre>
+		</div>
+	</body>
+</html>

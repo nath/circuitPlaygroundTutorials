@@ -1,0 +1,44 @@
+pre::selection, pre span::selection {
+    background: rgb(255, 204, 0);
+}
+.method {
+    color: rgb(211, 84, 0);
+}
+.type {
+    color: rgb(0, 151, 156);
+}
+.control {
+    color: rgb(94, 109, 3);
+}
+.comment {
+    color: rgb(94, 109, 117);
+}
+.string {
+    color: rgb(0, 91, 123);
+}
+.wrapper {
+    max-width: 1056px;
+    margin: auto;
+}
+body {
+    font-family: Verdana, Geneva, sans-serif;
+    font-size: 14pt;
+}
+pre {
+    background: #DDD;
+    padding: 10px;
+    border: 1px solid black;
+    font-family: "Courier New", Courier, monospace;
+    font-size: 10pt;
+    width: 95%;
+    border-radius: 3px;
+    margin: auto;
+    overflow-x: auto;
+}
+p {
+    line-height: 1.5em;
+}
+video {
+	display: block;
+	margin: 0 auto;
+}

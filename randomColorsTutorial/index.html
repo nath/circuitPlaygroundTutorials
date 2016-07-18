@@ -1,0 +1,57 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Random Colors Tutorial</title>
+        <link rel="stylesheet" href="../style.css" />
+    </head>
+    <body>
+        <div class="wrapper">
+            <h1>Adafruit Circuit Playground Random Colors Tutorial</h1>
+            <h5>By Nath Tumlin. Feel free to send comments, questions, concerns, corrections, or cash to ngtumlin@crimson.ua.edu</h5>
+			<h2>Video demo</h2>
+			<video width="680" height="480" controls>
+				<source src="randomColors.mp4" type="video/mp4" />
+				Your browser doesn't support the video tag.
+			</video>
+			<p>In this tutorial we learn how to make a program for the Adafruit Circuit Playground that makes the 10 NeoPixels on the Circuit Playground flash random colors, or maintain their current color depending on the position of the toggle switch.</p>
+			<h2>Initialization</h2>
+			<p>We'll start by including Adafruit's CircuitPlayground library.</p>
+			<pre><span class="control">#include</span> <span class="string">"Adafruit_CircuitPlayground.h"</span></pre>
+			<p>Then we need to define the <code>setup()</code> function, which runs one time when we turn on the board.</p>
+			<pre><span class="type">void</span> <span class="control">setup</span>() {
+  <span class="method">randomSeed</span>(<span class="method">analogRead</span>(0));
+  CircuitPlayground.<span class="method">begin</span>();
+}</pre>
+			<p>First, <code>setup()</code> sets up our random number generator so that each time we turn on the board we get a new sequence of lights. After that it sets up the CircuitPlayground library.</p>
+			<h2>Changing the lights</h2>
+			<p>The rest of the code lives in the <code>loop()</code> function, which runs over and over after <code>setup()</code> finishes. Below is the <code>loop()</code> function this program uses.</p>
+			<pre><span class="type">void</span> <span class="control">loop</span>() {
+  <span class="control">if</span> (CircuitPlayground.slideSwitch()) {
+    <span class="comment">//Loop through all pixels and set them to a random color</span>
+    <span class="control">for</span> (<span class="type">int</span> i=0; i<10; i++) {
+      CircuitPlayground.setPixelColor(i, CircuitPlayground.colorWheel(<span class="method">random</span>(256)));
+    }
+    <span class="method">delay</span>(500);
+  }
+}</pre>
+			<p>First we check if the slide switch is to the left. If it isn't we do nothing. The Circuit Playground has 10 NeoPixels, numbered 0 through 9. We loop from 0 to 9 and use <code>CircuitPlayground.setPixelColor(i, CircuitPlayground.colorWheel(<span class="method">random</span>(256)))</code> to set the ith NeoPixel to a random color. <code><span class="method">random</span>(256)</code> returns a random number between 0 and 255, and the <code>CircuitPlayground.colorWheel()</code> function takes a number between 0 and 255 and turns it into a color. Finally, <code><span class="method">delay</span>(500)</code> makes the Circuit Playground wait for half of a second before changing the lights again so that we can actually see the new colors.</p>
+			<h2>The complete code</h2>
+			<pre><span class="control">#include</span> <span class="string">"Adafruit_CircuitPlayground.h"</span>
+
+<span class="type">void</span> <span class="control">setup</span>() {
+  <span class="method">randomSeed</span>(<span class="method">analogRead</span>(0));
+  CircuitPlayground.<span class="method">begin</span>();
+}
+
+<span class="type">void</span> <span class="control">loop</span>() {
+  <span class="control">if</span> (CircuitPlayground.slideSwitch()) {
+    <span class="comment">//Loop through all pixels and set them to a random color</span>
+    <span class="control">for</span> (<span class="type">int</span> i=0; i<10; i++) {
+      CircuitPlayground.setPixelColor(i, CircuitPlayground.colorWheel(<span class="method">random</span>(256)));
+    }
+    <span class="method">delay</span>(500);
+  }
+}</pre>
+		</div>
+	</body>
+</html>
